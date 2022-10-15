@@ -1,0 +1,179 @@
+﻿
+<button class="btn-primary" id="addclassBtn">Add Class</button>
+
+<div class="row">
+    <div class="col-9">
+        <h2 class="text-info"> My Classes</h2>
+    </div>
+
+    <div class="col-12 border p-3 mt-3">
+        <div class="tableContainer">
+            <table id="ClassesTable" class="normalTable"></table>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="myModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Add Class</h5>
+                <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close">x</button>
+            </div>
+            <div class="modal-body">
+                 <label>Class Name</label>
+                <input type="text" id="className" />
+                <div id="validationdiv"> <span id="ValidationSpan" class="text-danger"></span> </div></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="saveClass">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+<input type="hidden" id="ModalClassName"/>
+
+@section Scripts
+{
+    <script src="~/lib/jquery/dist/jquery.js"></script>
+    <script src="~/js/bootstrap.min.js"></script>
+    <script src="//cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js"></script>
+    <script>
+        $(function () {
+        $("#ClassesTable").DataTable({
+                "processing": true,
+                "serverSide": true,
+                "filter": true,
+                "paging": true,
+                "orderMulti": false,
+                "ajax": {
+                    "url": "/Class/LoadClasses",
+                    "type": "Post",
+                    "datatype": "json",
+                    "dataSrc": function (json) {
+                        debugger;
+                        return json.data;
+                    }
+                },
+                "columns": [
+                    {
+                        title: "Name",
+                        name: "name",
+                        data: null,
+                        render: function (data, type, row, meta) {
+                            return row.name;
+                        }
+                    }
+                    ,
+                    {
+                        "title": "",
+                        data: null,
+                        name: "Delete",
+                        orderable: false,
+                        "render": function (data, type, row, meta) {
+
+
+                            return `<a href='javascript:void(0);' onclick='deleteData("${row.id}")'>Delete</a>`;
+                        }
+                        }
+
+]
+
+            });
+
+
+            $("#addclassBtn").on('click', function () {
+                debugger;
+
+                $('#myModal').modal('show');
+
+
+            });
+            //$("#closebtn").on('click',function(){
+            //    $('#myModal').modal('hide');
+
+
+            $("#saveClass").on('click', function () {
+             
+               
+
+                var pattern = /^[A-Za-z'.-]+$/;
+                var className = $("#className").val();
+                if (className == undefined || className == null || className == '') {
+                    $("#validationdiv #ValidationSpan").text("Enter class Name");
+                  
+                }
+
+                else if (!pattern.test(className)) {
+                    $("#validationdiv #ValidationSpan").text("class name contain characters");
+
+                }
+                else {
+                    $("#validationdiv #ValidationSpan").text("");
+                    $("#ModalClassName").val(className);
+                }
+                var RequestedData = {};
+                RequestedData.Name = $("#ModalClassName").val(); 
+              
+                $.ajax({
+                    type: "POST",
+                    url: '@Url.Action("AddClass")',
+                    data: { "Name": $("#ModalClassName").val() } ,
+                dataType: "json",
+               
+                    success: function (message) {
+                        if (message == "exist") {
+                            $("#validationdiv #ValidationSpan").text("class name already exist");
+                            return; 
+                        }
+                        if (message == "success") {
+                            $('#myModal').modal('hide');
+                            $('#ClassesTable').DataTable().ajax.reload(null, false);
+
+                            
+                        }
+                },
+                error: function () {
+                    alert("Error while inserting data");
+                }
+                }
+            );
+                
+
+            });
+
+
+
+        });
+        function deleteData(id) {
+            if (confirm("Are you sure you want to delete ...?")) {
+                Delete(id);
+            } else {
+                return false;
+            }
+        }
+
+
+        function Delete(id) {
+            var url = 'Class/deleteClass/' + id;
+
+            $.get(url,
+                function (data) {
+                    if (data == "Success") {
+                        $('#ClassesTable').DataTable().ajax.reload(null, false);
+                        alert("Deleted Successfully..");
+                    }
+                    else if (data == "Related")
+                    {
+                        alert("class contain students, delete them first");
+                    }
+                    else {
+
+                        alert("something went wrong ");
+                    }
+                });
+        }
+    </script>
+
+}

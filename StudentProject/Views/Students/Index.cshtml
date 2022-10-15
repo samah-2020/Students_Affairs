@@ -1,0 +1,159 @@
+﻿@model List<Class>
+    <div>
+        <a href="/Students/Create" class="btn btn-primary">Add Student</a>
+    </div>
+
+<br/>
+<br/>
+<div class="flexRow container">
+    <div class="sideBySide">
+        <p class="sideP">Filter By Class Name</p>
+        @if (Model != null && Model.Any())
+        {
+            <select class="form-control" id="ClassesDDL" name="Classes">
+                <option value="select">--Select--</option>
+                @foreach (var item in Model)
+                {
+                    <option value="@item.Id">@item.Name</option>
+                }
+            </select>
+        }
+    </div>
+</div> 
+
+
+
+ 
+<div class="row">
+    <div class="col-9">
+        <h2 class="text-info"> My Students</h2>
+    </div>
+
+    <div class="col-12 border p-3 mt-3">
+        <div class="tableContainer">
+            <table id="StudentsTable" class="normalTable"></table>
+        </div>
+    </div>
+</div>
+
+
+
+@section Scripts
+{
+    <script src="~/lib/jquery/dist/jquery.js"></script>
+    <script src="~/js/bootstrap.min.js"></script>
+    <script src="//cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js"></script>
+    <script>
+        $(function () {
+            $("#StudentsTable").DataTable({
+                "processing": true,
+                "serverSide": true,
+                "filter": true,
+                "paging": true,
+                "orderMulti": false,
+                "ajax": {
+                    "url": "/Students/LoadStudentsWithClass",
+                    "type": "Post",
+                    "datatype": "json",
+                    "dataSrc": function (json) {
+                        debugger;
+                        return json.data;
+                    }
+                },
+                "columns": [
+                    {
+                        title: "First Name",
+                        name: "firstName",
+                        data: null,
+                        render: function (data, type, row, meta) {
+                            return row.firstName;
+                        }
+                    }
+                    ,
+                    {
+                        title: "Last Name",
+                        name: "lastName",
+                        data: null,
+                        render: function (data, type, row, meta) {
+                            return row.lastName;
+                        }
+                    }
+                    ,
+                    {
+                        title: "Gender",
+                        name: "gender",
+                        data: null,
+                        render: function (data, type, row, meta) {
+                            
+                            if (row.gender == 1) {
+                               
+                                return '<span>Female</span>'
+                            }
+                            else {
+                               
+                                    
+                                return '<span>Male</span>'
+                            }
+                        }
+                    }
+                    ,
+                    {
+                        title: "Class Name",
+                        name: "className",
+                        data: null,
+                        render: function (data, type, row, meta) {
+                            return row.className;
+                        }
+                    }
+                    ,
+                    {
+                        "title": "",
+                        data: null,
+                        name: "Delete",
+                        orderable: false,
+                        "render": function (data, type, row, meta) {
+
+
+                            return `<a href='javascript:void(0);' onclick='deleteData("${row.id}")'>Delete</a>`;
+                        }
+                    }
+
+                ]
+
+            });
+            $('#ClassesDDL').on('change', function () {
+                var table = $('#StudentsTable').DataTable();
+                table.column(3)
+                    .search($(this).val())
+                    .draw();
+            });
+        }); 
+
+
+        
+        function deleteData(id) {
+            if (confirm("Are you sure you want to delete ...?")) {
+                Delete(id);
+            } else {
+                return false;
+            }
+        }
+
+
+        function Delete(id) {
+            var url = 'Students/deleteStudent/' + id;
+
+            $.get(url,
+                function (data) {
+                    if (data == "Success") {
+                        $('#StudentsTable').DataTable().ajax.reload(null, false);
+                        alert("Deleted Successfully..");
+                    } else {
+
+                        alert("something went wrong ");
+                    }
+                });
+        }
+    </script>
+
+}
